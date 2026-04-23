@@ -140,7 +140,12 @@ portfolio-venv/
 ENV/
 env.bak/
 venv.bak/
-
+portfolio-venv/
+db.sqlite3
+.env
+__pycache__/
+*.pyc
+logs/
 # Spyder project settings
 .spyderproject
 .spyproject
