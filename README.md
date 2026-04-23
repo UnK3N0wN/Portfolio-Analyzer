@@ -46,6 +46,8 @@ ai_portfolio/
 
 ## ⚙️ Installation & Setup
 
+### Use python 3.12 version for few packages to support
+
 ### 1. Clone the repository
 
 ```bash
