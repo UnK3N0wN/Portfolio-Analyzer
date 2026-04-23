@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Profile — PortfolioAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="profile-wrapper">
+        <div class="profile-header">
+            <div>
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" class="profile-avatar" alt="Avatar"/>
+                {% else %}
+                    <div class="profile-avatar-initials">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <h2 class="profile-name">{{ user.get_full_name|default:user.username }}</h2>
+                <p class="profile-username">@{{ user.username }}</p>
+                <p class="profile-joined"><i class="bi bi-calendar3 me-1"></i>Joined {{ user.date_joined|date:"F Y" }}</p>
+            </div>
+        </div>
+
+        <div class="profile-form-card">
+            <h4 class="section-title">Edit Profile</h4>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <h6 class="form-section-label">Account Info</h6>
+                <div class="row mb-3">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">First Name</label>{{ user_form.first_name }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Last Name</label>{{ user_form.last_name }}
+                    </div>
+                </div>
+                <div class="mb-3"><label class="form-label">Username</label>{{ user_form.username }}</div>
+                <div class="mb-4"><label class="form-label">Email</label>{{ user_form.email }}</div>
+
+                <h6 class="form-section-label mt-4">Profile Details</h6>
+                <div class="mb-3"><label class="form-label">Profile Picture</label>{{ profile_form.avatar }}</div>
+                <div class="mb-4"><label class="form-label">Bio</label>{{ profile_form.bio }}</div>
+
+                <button type="submit" class="btn-auth">
+                    <span>Save Changes</span><i class="bi bi-check2 ms-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

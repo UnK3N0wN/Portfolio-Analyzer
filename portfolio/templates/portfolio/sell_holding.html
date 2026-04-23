@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Sell {{ holding.symbol }} — PortfolioAI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="auth-card auth-card-wide mx-auto">
+
+        <div class="auth-header">
+            <div class="auth-icon" style="background:rgba(240,64,96,0.08); border-color:rgba(240,64,96,0.25);">
+                <i class="bi bi-dash-circle" style="color:var(--danger)"></i>
+            </div>
+            <h2 class="auth-title">Sell {{ holding.symbol }}</h2>
+            <p class="auth-subtitle">{{ holding.name }}</p>
+        </div>
+
+        <!-- Current Position -->
+        <div class="position-box">
+            <p class="position-box-label">Your Current Position</p>
+            <div class="row g-2">
+                <div class="col-6 col-md-3 text-center">
+                    <p class="position-item-label">Quantity Owned</p>
+                    <p class="position-item-value" style="color:var(--accent);">{{ holding.quantity|floatformat:4 }}</p>
+                </div>
+                <div class="col-6 col-md-3 text-center">
+                    <p class="position-item-label">Avg Cost</p>
+                    <p class="position-item-value">${{ holding.avg_price|floatformat:2 }}</p>
+                </div>
+                <div class="col-6 col-md-3 text-center">
+                    <p class="position-item-label">Current Price</p>
+                    <p class="position-item-value" style="color:var(--accent);">${{ holding.current_price|floatformat:2 }}</p>
+                </div>
+                <div class="col-6 col-md-3 text-center">
+                    <p class="position-item-label">Unrealised P/L</p>
+                    <p class="position-item-value" style="color:{% if holding.profit_loss >= 0 %}var(--accent){% else %}var(--danger){% endif %};">
+                        {% if holding.profit_loss >= 0 %}+{% endif %}${{ holding.profit_loss|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" id="sellForm">
+            {% csrf_token %}
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Quantity to Sell</label>
+                    <input type="number" name="quantity" id="sellQty"
+                           step="any" min="0.00000001" max="{{ holding.quantity }}"
+                           class="form-control"
+                           placeholder="Max: {{ holding.quantity|floatformat:4 }}" required
+                           style="padding-left:0.8rem !important;"/>
+                    <div class="d-flex gap-1 mt-2">
+                        <button type="button" class="qty-preset" onclick="setQty(25)">25%</button>
+                        <button type="button" class="qty-preset" onclick="setQty(50)">50%</button>
+                        <button type="button" class="qty-preset" onclick="setQty(75)">75%</button>
+                        <button type="button" class="qty-preset sell-all" onclick="setQty(100)">All</button>
+                    </div>
+                    {% if form.quantity.errors %}<div class="field-error">{{ form.quantity.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Sell Price per Unit ($)</label>
+                    <input type="number" name="price" id="sellPrice"
+                           step="any" min="0.00000001"
+                           class="form-control" value="{{ form.price.value }}" required
+                           style="padding-left:0.8rem !important;"/>
+                    <small style="color:var(--text-muted); font-size:0.72rem; margin-top:0.25rem; display:block;">Pre-filled with live market price</small>
+                    {% if form.price.errors %}<div class="field-error">{{ form.price.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <!-- Live Calculator -->
+            <div id="sellCalc" class="calc-box" style="display:none;">
+                <p class="calc-box-label">Order Summary</p>
+                <div class="row g-2">
+                    <div class="col-6 col-md-3 text-center">
+                        <p class="calc-item-label">Selling</p>
+                        <p id="calcSellQty" class="calc-item-value">—</p>
+                    </div>
+                    <div class="col-6 col-md-3 text-center">
+                        <p class="calc-item-label">Proceeds</p>
+                        <p id="calcProceeds" class="calc-item-value" style="color:var(--accent);">—</p>
+                    </div>
+                    <div class="col-6 col-md-3 text-center">
+                        <p class="calc-item-label">Realised P/L</p>
+                        <p id="calcPL" class="calc-item-value">—</p>
+                    </div>
+                    <div class="col-6 col-md-3 text-center">
+                        <p class="calc-item-label">Remaining</p>
+                        <p id="calcRemaining" class="calc-item-value">—</p>
+                    </div>
+                </div>
+
+                <div id="sellAllWarning" style="display:none; margin-top:0.75rem; background:var(--danger-dim); border:1px solid rgba(240,64,96,0.2); border-radius:5px; padding:0.5rem 0.8rem; font-size:0.78rem; color:var(--danger);">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Selling all units will remove <strong>{{ holding.symbol }}</strong> from your portfolio.
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Notes (optional)</label>
+                <textarea name="notes" class="form-control" rows="2"
+                          placeholder="Optional notes..."
+                          style="padding-left:0.8rem !important;"></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-auth" id="sellBtn"
+                        style="background:var(--danger);">
+                    <i class="bi bi-dash-circle me-1"></i> Confirm Sell
+                </button>
+                <a href="{% url 'portfolio:portfolio' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const maxQty  = {{ holding.quantity }};
+    const avgCost = {{ holding.avg_price }};
+
+    function setQty(pct) {
+        document.getElementById('sellQty').value = (maxQty * pct / 100).toFixed(8);
+        updateCalc();
+    }
+
+    function updateCalc() {
+        const qty   = parseFloat(document.getElementById('sellQty').value) || 0;
+        const price = parseFloat(document.getElementById('sellPrice').value) || 0;
+        const calc  = document.getElementById('sellCalc');
+
+        if (qty > 0 && price > 0) {
+            calc.style.display = 'block';
+
+            const proceeds   = qty * price;
+            const realisedPL = proceeds - (qty * avgCost);
+            const remaining  = maxQty - qty;
+
+            document.getElementById('calcSellQty').textContent  = qty.toFixed(4) + ' units';
+            document.getElementById('calcProceeds').textContent = '$' + proceeds.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+            const plEl = document.getElementById('calcPL');
+            plEl.textContent = (realisedPL >= 0 ? '+$' : '-$') + Math.abs(realisedPL).toFixed(2);
+            plEl.style.color = realisedPL >= 0 ? 'var(--accent)' : 'var(--danger)';
+
+            const remEl = document.getElementById('calcRemaining');
+            remEl.textContent = remaining <= 0.000001 ? '0 (fully sold)' : remaining.toFixed(4);
+            remEl.style.color = remaining <= 0.000001 ? 'var(--danger)' : 'var(--text)';
+
+            document.getElementById('sellAllWarning').style.display = remaining <= 0.000001 ? 'block' : 'none';
+
+            const overSell = qty > maxQty + 0.000001;
+            const btn = document.getElementById('sellBtn');
+            btn.disabled     = overSell;
+            btn.style.opacity = overSell ? '0.45' : '1';
+        } else {
+            calc.style.display = 'none';
+        }
+    }
+
+    document.getElementById('sellQty').addEventListener('input', updateCalc);
+    document.getElementById('sellPrice').addEventListener('input', updateCalc);
+    updateCalc();
+</script>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}{{ stock.symbol }} — PortfolioAI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 style="font-family:'Syne',sans-serif; font-weight:800;">{{ stock.symbol }}</h2>
+            <p style="color:var(--text-muted);">{{ stock.name }} · {{ stock.sector }}</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'stocks:search' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+            <a href="{% url 'portfolio:watchlist' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-eye me-1"></i> Watchlist
+            </a>
+            <a href="{% url 'portfolio:add_stock' %}" class="btn-auth">
+                <i class="bi bi-plus me-1"></i> Add to Portfolio
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Current Price</p>
+                <h3 class="stat-value">${{ stock.current_price }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Day Change</p>
+                <h3 class="stat-value {% if stock.price_change >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {% if stock.price_change >= 0 %}+{% endif %}${{ stock.price_change }}
+                    <small>({% if stock.price_change_percent >= 0 %}+{% endif %}{{ stock.price_change_percent }}%)</small>
+                </h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Day High / Low</p>
+                <h3 class="stat-value" style="font-size:1rem;">
+                    <span class="text-success">${{ stock.high_price }}</span> /
+                    <span class="text-danger">${{ stock.low_price }}</span>
+                </h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Volume</p>
+                <h3 class="stat-value" style="font-size:1rem;">{{ stock.volume|floatformat:0 }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Open Price</p>
+                <h3 class="stat-value">${{ stock.open_price }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">52W High</p>
+                <h3 class="stat-value text-success">${{ stock.week_52_high }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">52W Low</p>
+                <h3 class="stat-value text-danger">${{ stock.week_52_low }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Sector</p>
+                <h3 class="stat-value" style="font-size:0.95rem;">{{ stock.sector|default:"N/A" }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Price Chart -->
+    {% if history %}
+    <div class="dash-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="dash-card-title mb-0"><i class="bi bi-bar-chart me-2"></i>30 Day Price History</h5>
+            <span style="color:var(--text-muted); font-size:0.82rem;">
+                High: <strong class="text-success">${{ stock.week_52_high }}</strong>
+                &nbsp;Low: <strong class="text-danger">${{ stock.week_52_low }}</strong>
+            </span>
+        </div>
+        <div style="position:relative; height:280px;">
+            <canvas id="priceChart"></canvas>
+        </div>
+    </div>
+    {% else %}
+    <div class="dash-card text-center py-4">
+        <p style="color:var(--text-muted)">No price history available for {{ stock.symbol }}.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if history %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const history   = {{ history|safe }};
+    const isUp      = history[history.length - 1].close >= history[0].close;
+    const lineColor = isUp ? '#00d4aa' : '#ff4d6d';
+    const fillColor = isUp ? 'rgba(0,212,170,0.08)' : 'rgba(255,77,109,0.08)';
+
+    new Chart(document.getElementById('priceChart'), {
+        type: 'line',
+        data: {
+            labels: history.map(h => h.date),
+            datasets: [{
+                label:                    '{{ stock.symbol }} Price',
+                data:                     history.map(h => h.close),
+                borderColor:              lineColor,
+                backgroundColor:          fillColor,
+                borderWidth:              2,
+                pointRadius:              0,
+                pointHoverRadius:         5,
+                pointHoverBackgroundColor: lineColor,
+                fill:                     true,
+                tension:                  0.3,
+            }]
+        },
+        options: {
+            responsive:          true,
+            maintainAspectRatio: false,
+            interaction:         { intersect: false, mode: 'index' },
+            plugins: {
+                legend:  { display: false },
+                tooltip: { callbacks: { label: ctx => ` $${ctx.parsed.y.toFixed(2)}` } }
+            },
+            scales: {
+                x: { ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: '#2a3347' } },
+                y: { ticks: { color: '#64748b', callback: v => '$' + v }, grid: { color: '#2a3347' } }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

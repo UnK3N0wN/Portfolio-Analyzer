@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Add Asset — PortfolioAI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="auth-card auth-card-wide mx-auto">
+        <div class="auth-header">
+            <div class="auth-icon"><i class="bi bi-plus-circle"></i></div>
+            <h2 class="auth-title">Add New Asset</h2>
+            <p class="auth-subtitle">Add a stock or crypto to your portfolio</p>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Symbol</label>
+                    {{ form.symbol }}
+                    {% if form.symbol.errors %}<div class="field-error">{{ form.symbol.errors.0 }}</div>{% endif %}
+                    <small style="color:var(--text-muted); font-size:0.78rem;">e.g. AAPL, MSFT, BTC-USD</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Company Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<div class="field-error">{{ form.name.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Asset Type</label>
+                {{ form.asset_type }}
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Quantity</label>
+                    {{ form.quantity }}
+                    {% if form.quantity.errors %}<div class="field-error">{{ form.quantity.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Buy Price per Unit ($)</label>
+                    {{ form.price }}
+                    {% if form.price.errors %}<div class="field-error">{{ form.price.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Notes (optional)</label>
+                {{ form.notes }}
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-auth">
+                    <i class="bi bi-check2 me-1"></i> Add to Portfolio
+                </button>
+                <a href="{% url 'portfolio:portfolio' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}Buy {{ holding.symbol }} — PortfolioAI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="auth-card auth-card-wide mx-auto">
+
+        <div class="auth-header">
+            <div class="auth-icon" style="background:rgba(0,200,150,0.1); border-color:rgba(0,200,150,0.25);">
+                <i class="bi bi-plus-circle" style="color:var(--accent)"></i>
+            </div>
+            <h2 class="auth-title">Buy {{ holding.symbol }}</h2>
+            <p class="auth-subtitle">{{ holding.name }}</p>
+        </div>
+
+        <!-- Current Position -->
+        <div class="position-box">
+            <p class="position-box-label">Your Current Position</p>
+            <div class="row g-2">
+                <div class="col-4 text-center">
+                    <p class="position-item-label">Quantity Owned</p>
+                    <p class="position-item-value" style="color:var(--accent);">{{ holding.quantity|floatformat:4 }}</p>
+                </div>
+                <div class="col-4 text-center">
+                    <p class="position-item-label">Avg Buy Price</p>
+                    <p class="position-item-value">${{ holding.avg_price|floatformat:2 }}</p>
+                </div>
+                <div class="col-4 text-center">
+                    <p class="position-item-label">Current Price</p>
+                    <p class="position-item-value" style="color:var(--accent);">${{ holding.current_price|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" id="buyForm">
+            {% csrf_token %}
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Quantity to Buy</label>
+                    <input type="number" name="quantity" id="buyQty"
+                           step="any" min="0.00000001"
+                           class="form-control" placeholder="e.g. 5" required
+                           style="padding-left:0.8rem !important;"/>
+                    {% if form.quantity.errors %}<div class="field-error">{{ form.quantity.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Price per Unit ($)</label>
+                    <input type="number" name="price" id="buyPrice"
+                           step="any" min="0.00000001"
+                           class="form-control" value="{{ form.price.value }}" required
+                           style="padding-left:0.8rem !important;"/>
+                    <small style="color:var(--text-muted); font-size:0.72rem; margin-top:0.25rem; display:block;">Pre-filled with live market price</small>
+                    {% if form.price.errors %}<div class="field-error">{{ form.price.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <!-- Live Calculator -->
+            <div id="buyCalc" class="calc-box" style="display:none; background:rgba(0,200,150,0.04); border-color:rgba(0,200,150,0.18);">
+                <p class="calc-box-label">Order Summary</p>
+                <div class="row g-2">
+                    <div class="col-6 col-md-3 text-center">
+                        <p class="calc-item-label">Buying</p>
+                        <p id="calcQty" class="calc-item-value" style="color:var(--accent);">—</p>
+                    </div>
+                    <div class="col-6 col-md-3 text-center">
+                        <p class="calc-item-label">Total Cost</p>
+                        <p id="calcTotal" class="calc-item-value">—</p>
+                    </div>
+                    <div class="col-6 col-md-3 text-center">
+                        <p class="calc-item-label">New Quantity</p>
+                        <p id="calcNewQty" class="calc-item-value" style="color:var(--accent);">—</p>
+                    </div>
+                    <div class="col-6 col-md-3 text-center">
+                        <p class="calc-item-label">New Avg Price</p>
+                        <p id="calcNewAvg" class="calc-item-value">—</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Notes (optional)</label>
+                <textarea name="notes" class="form-control" rows="2"
+                          placeholder="Optional notes..."
+                          style="padding-left:0.8rem !important;"></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-auth">
+                    <i class="bi bi-plus-circle me-1"></i> Confirm Buy
+                </button>
+                <a href="{% url 'portfolio:portfolio' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const currentQty = {{ holding.quantity }};
+    const currentAvg = {{ holding.avg_price }};
+
+    function updateCalc() {
+        const qty   = parseFloat(document.getElementById('buyQty').value) || 0;
+        const price = parseFloat(document.getElementById('buyPrice').value) || 0;
+        const calc  = document.getElementById('buyCalc');
+
+        if (qty > 0 && price > 0) {
+            calc.style.display = 'block';
+            const total       = qty * price;
+            const newQty      = currentQty + qty;
+            const newAvgPrice = ((currentQty * currentAvg) + total) / newQty;
+
+            document.getElementById('calcQty').textContent    = qty.toFixed(4) + ' units';
+            document.getElementById('calcTotal').textContent  = '$' + total.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+            document.getElementById('calcNewQty').textContent = newQty.toFixed(4);
+            document.getElementById('calcNewAvg').textContent = '$' + newAvgPrice.toFixed(2);
+        } else {
+            calc.style.display = 'none';
+        }
+    }
+
+    document.getElementById('buyQty').addEventListener('input', updateCalc);
+    document.getElementById('buyPrice').addEventListener('input', updateCalc);
+    updateCalc();
+</script>
+{% endblock %}

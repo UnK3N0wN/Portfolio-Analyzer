@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Login — PortfolioAI{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon"><i class="bi bi-graph-up-arrow"></i></div>
+            <h1 class="auth-title">Welcome Back</h1>
+            <p class="auth-subtitle">Sign in to your portfolio</p>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group mb-4">
+                <label class="form-label">Username</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-person input-icon"></i>{{ form.username }}
+                </div>
+                {% if form.username.errors %}<div class="field-error">{{ form.username.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group mb-4">
+                <label class="form-label">Password</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock input-icon"></i>{{ form.password }}
+                </div>
+                {% if form.password.errors %}<div class="field-error">{{ form.password.errors.0 }}</div>{% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="auth-error mb-3">
+                <i class="bi bi-exclamation-circle me-2"></i>{{ form.non_field_errors.0 }}
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn-auth w-100">
+                <span>Sign In</span><i class="bi bi-arrow-right ms-2"></i>
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="{% url 'users:register' %}" class="auth-link">Create one</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

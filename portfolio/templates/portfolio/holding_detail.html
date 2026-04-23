@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% block title %}{{ holding.symbol }} Detail — PortfolioAI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a href="{% url 'portfolio:portfolio' %}" style="color:var(--text-muted); font-size:0.82rem;">
+                    <i class="bi bi-arrow-left me-1"></i>Portfolio
+                </a>
+            </div>
+            <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; margin-bottom:0.1rem;">
+                {{ holding.symbol }}
+                <span class="badge {% if holding.asset_type == 'stock' %}bg-primary{% else %}bg-warning text-dark{% endif %} ms-2" style="font-size:0.65rem; vertical-align:middle;">
+                    {{ holding.asset_type|upper }}
+                </span>
+            </h2>
+            <p style="color:var(--text-muted); font-size:0.875rem; margin:0;">{{ holding.name }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'portfolio:buy_more' holding.id %}"
+               style="background:rgba(0,200,150,0.1); color:var(--accent); border:1px solid rgba(0,200,150,0.3); border-radius:6px; padding:0.5rem 1rem; font-size:0.82rem; font-weight:600; display:inline-flex; align-items:center; gap:0.35rem;">
+                <i class="bi bi-plus-circle"></i> Buy More
+            </a>
+            <a href="{% url 'portfolio:sell_holding' holding.id %}"
+               style="background:rgba(240,64,96,0.08); color:var(--danger); border:1px solid rgba(240,64,96,0.3); border-radius:6px; padding:0.5rem 1rem; font-size:0.82rem; font-weight:600; display:inline-flex; align-items:center; gap:0.35rem;">
+                <i class="bi bi-dash-circle"></i> Sell
+            </a>
+        </div>
+    </div>
+
+    <!-- Your Position Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Current Price</p>
+                <h3 class="stat-value">${{ holding.current_price|floatformat:2 }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Quantity Owned</p>
+                <h3 class="stat-value" style="color:var(--accent);">{{ holding.quantity|floatformat:4 }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Avg Buy Price</p>
+                <h3 class="stat-value">${{ holding.avg_price|floatformat:2 }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Total Value</p>
+                <h3 class="stat-value">${{ holding.current_value|floatformat:2 }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Total Invested</p>
+                <h3 class="stat-value">${{ holding.total_invested|floatformat:2 }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Profit / Loss</p>
+                <h3 class="stat-value {% if holding.profit_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {% if holding.profit_loss >= 0 %}+{% endif %}${{ holding.profit_loss|floatformat:2 }}
+                </h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Return %</p>
+                <h3 class="stat-value {% if holding.profit_loss_percent >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {% if holding.profit_loss_percent >= 0 %}+{% endif %}{{ holding.profit_loss_percent|floatformat:2 }}%
+                </h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Sector</p>
+                <h3 class="stat-value" style="font-size:0.9rem;">{{ stats.sector }}</h3>
+            </div>
+        </div>
+    </div>
+
+    {% if history %}
+    <!-- Price History + Prediction Chart -->
+    <div class="dash-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="dash-card-title mb-0">
+                <i class="bi bi-graph-up me-2" style="color:var(--accent)"></i>
+                30-Day Price History + 7-Day Prediction
+            </h5>
+            <div class="d-flex align-items-center gap-3" style="font-size:0.75rem;">
+                <span style="display:flex; align-items:center; gap:0.3rem;">
+                    <span style="width:16px; height:2px; background:var(--accent); display:inline-block; border-radius:2px;"></span>
+                    <span style="color:var(--text-muted);">Historical</span>
+                </span>
+                <span style="display:flex; align-items:center; gap:0.3rem;">
+                    <span style="width:16px; height:2px; background:{% if trend == 'up' %}var(--accent){% else %}var(--danger){% endif %}; display:inline-block; border-radius:2px; border-top: 2px dashed;"></span>
+                    <span style="color:var(--text-muted);">Predicted ({% if trend == 'up' %}▲ Upward{% else %}▼ Downward{% endif %})</span>
+                </span>
+            </div>
+        </div>
+        <div style="position:relative; height:300px;">
+            <canvas id="predictionChart"></canvas>
+        </div>
+
+        <!-- Prediction disclaimer -->
+        <p style="color:var(--text-muted); font-size:0.72rem; margin-top:0.75rem; text-align:center;">
+            <i class="bi bi-info-circle me-1"></i>
+            Prediction uses linear regression on 30-day data. For educational purposes only — not financial advice.
+        </p>
+    </div>
+
+    <!-- Market Stats -->
+    {% if stats.week_52_high %}
+    <div class="dash-card mb-4">
+        <h5 class="dash-card-title"><i class="bi bi-bar-chart me-2" style="color:var(--accent)"></i>Market Stats</h5>
+        <div class="row g-3">
+            <div class="col-6 col-md-3 text-center">
+                <p class="stat-label">52W High</p>
+                <p style="font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:var(--accent); margin:0;">${{ stats.week_52_high }}</p>
+            </div>
+            <div class="col-6 col-md-3 text-center">
+                <p class="stat-label">52W Low</p>
+                <p style="font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:var(--danger); margin:0;">${{ stats.week_52_low }}</p>
+            </div>
+            <div class="col-6 col-md-3 text-center">
+                <p class="stat-label">P/E Ratio</p>
+                <p style="font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; margin:0;">{{ stats.pe_ratio }}</p>
+            </div>
+            <div class="col-6 col-md-3 text-center">
+                <p class="stat-label">Volume</p>
+                <p style="font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; margin:0;">{{ stats.volume|floatformat:0 }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="dash-card text-center py-4">
+        <i class="bi bi-graph-up" style="font-size:2.5rem; color:var(--text-dim)"></i>
+        <p style="color:var(--text-muted); margin-top:0.75rem; font-size:0.875rem;">No price history available for {{ holding.symbol }}.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if history %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const histDates  = {{ history_dates|safe }};
+    const histPrices = {{ prices|safe }};
+    const predDates  = {{ fut_dates|safe }};
+    const predPrices = {{ predicted|safe }};
+    const trend      = "{{ trend }}";
+    const predColor  = trend === 'up' ? '#00c896' : '#f04060';
+
+    // Combine labels: historical + predicted
+    const allLabels = [...histDates, ...predDates];
+
+    // Historical dataset — null for predicted section
+    const histData = [...histPrices, ...Array(predDates.length).fill(null)];
+
+    // Prediction dataset — null for historical section, then predicted
+    // Connect at the last historical point
+    const predData = [...Array(histPrices.length - 1).fill(null), histPrices[histPrices.length - 1], ...predPrices];
+
+    new Chart(document.getElementById('predictionChart'), {
+        type: 'line',
+        data: {
+            labels: allLabels,
+            datasets: [
+                {
+                    label:               'Historical Price',
+                    data:                histData,
+                    borderColor:         '#00c896',
+                    backgroundColor:     'rgba(0,200,150,0.06)',
+                    borderWidth:         2,
+                    pointRadius:         0,
+                    pointHoverRadius:    5,
+                    pointHoverBackgroundColor: '#00c896',
+                    fill:                true,
+                    tension:             0.3,
+                    spanGaps:            false,
+                },
+                {
+                    label:               '7-Day Prediction',
+                    data:                predData,
+                    borderColor:         predColor,
+                    backgroundColor:     'transparent',
+                    borderWidth:         2,
+                    borderDash:          [6, 4],
+                    pointRadius:         (ctx) => ctx.dataIndex >= histPrices.length ? 4 : 0,
+                    pointBackgroundColor: predColor,
+                    pointBorderColor:    '#0d1526',
+                    pointBorderWidth:    2,
+                    fill:                false,
+                    tension:             0.2,
+                    spanGaps:            false,
+                }
+            ]
+        },
+        options: {
+            responsive:          true,
+            maintainAspectRatio: false,
+            interaction:         { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0d1526',
+                    borderColor:     '#1e2d45',
+                    borderWidth:     1,
+                    titleColor:      '#dde6f0',
+                    bodyColor:       '#5a7090',
+                    padding:         10,
+                    callbacks: {
+                        label: ctx => {
+                            if (ctx.parsed.y === null) return null;
+                            const label = ctx.datasetIndex === 0 ? 'Price' : 'Predicted';
+                            return ` ${label}: $${ctx.parsed.y.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#5a7090',
+                        maxTicksLimit: 10,
+                        callback: function(val, idx) {
+                            // Mark start of prediction
+                            if (idx === histDates.length) return '▶ Forecast';
+                            return this.getLabelForValue(val);
+                        }
+                    },
+                    grid: { color: '#1e2d45' }
+                },
+                y: {
+                    ticks: { color: '#5a7090', callback: v => '$' + v.toLocaleString() },
+                    grid:  { color: '#1e2d45' }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}
