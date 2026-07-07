@@ -1,3 +1,6 @@
+import io
+import csv
+from django.http import HttpResponse
 import yfinance as yf
 import numpy as np
 from datetime import date, timedelta
@@ -347,6 +350,162 @@ def transactions(request):
         'portfolio':    portfolio,
         'transactions': portfolio.transactions.all(),
     })
+
+def _filtered_transactions(request, portfolio):
+    """Shared filtering logic for exports: ?start=YYYY-MM-DD&end=YYYY-MM-DD&symbol=AAPL&type=buy"""
+    qs = portfolio.transactions.all()
+
+    start = request.GET.get('start')
+    end   = request.GET.get('end')
+    symbol = request.GET.get('symbol', '').strip().upper()
+    ttype  = request.GET.get('type', '').strip().lower()
+
+    if start:
+        qs = qs.filter(date__date__gte=start)
+    if end:
+        qs = qs.filter(date__date__lte=end)
+    if symbol:
+        qs = qs.filter(symbol=symbol)
+    if ttype in ('buy', 'sell'):
+        qs = qs.filter(transaction_type=ttype)
+
+    return qs
+
+
+@login_required
+def export_transactions_csv(request):
+    portfolio    = get_or_create_portfolio(request.user)
+    transactions = _filtered_transactions(request, portfolio)
+
+    filename = f'transactions_{request.user.username}_{date.today().isoformat()}.csv'
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Symbol', 'Name', 'Asset Type', 'Transaction Type',
+                      'Quantity', 'Price', 'Total Amount', 'Notes'])
+
+    for t in transactions:
+        writer.writerow([
+            timezone.localtime(t.date).strftime('%Y-%m-%d %H:%M'),
+            t.symbol,
+            t.name,
+            t.get_asset_type_display(),
+            t.get_transaction_type_display(),
+            f'{float(t.quantity):.8f}'.rstrip('0').rstrip('.'),
+            f'{float(t.price):.2f}',
+            f'{float(t.total_amount):.2f}',
+            t.notes or '',
+        ])
+
+    return response
+
+
+@login_required
+def export_transactions_pdf(request):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.lib.units import inch
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
+    portfolio    = get_or_create_portfolio(request.user)
+    transactions = _filtered_transactions(request, portfolio)
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=landscape(letter),
+        topMargin=0.6 * inch, bottomMargin=0.6 * inch,
+        leftMargin=0.5 * inch, rightMargin=0.5 * inch,
+    )
+    styles = getSampleStyleSheet()
+    story = []
+
+    story.append(Paragraph(f'Transaction History — {portfolio.name}', styles['Title']))
+    story.append(Paragraph(
+        f'{request.user.username} &middot; Generated {timezone.localtime(timezone.now()).strftime("%b %d, %Y %H:%M")}',
+        styles['Normal']
+    ))
+    story.append(Spacer(1, 16))
+
+    buys  = [t for t in transactions if t.transaction_type == 'buy']
+    sells = [t for t in transactions if t.transaction_type == 'sell']
+    total_bought = sum(float(t.total_amount) for t in buys)
+    total_sold   = sum(float(t.total_amount) for t in sells)
+
+    summary_data = [
+        ['Total Transactions', 'Buys', 'Sells', 'Total Bought', 'Total Sold'],
+        [str(len(transactions)), str(len(buys)), str(len(sells)),
+         f'${total_bought:,.2f}', f'${total_sold:,.2f}'],
+    ]
+    summary_table = Table(summary_data, hAlign='LEFT', colWidths=[1.8 * inch] * 5)
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f2937')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    story.append(summary_table)
+    story.append(Spacer(1, 20))
+
+    table_data = [['Date', 'Symbol', 'Name', 'Asset', 'Type', 'Quantity', 'Price', 'Total', 'Notes']]
+    for t in transactions:
+        table_data.append([
+            timezone.localtime(t.date).strftime('%Y-%m-%d %H:%M'),
+            t.symbol,
+            (t.name[:22] + '…') if len(t.name) > 22 else t.name,
+            t.get_asset_type_display(),
+            t.get_transaction_type_display(),
+            f'{float(t.quantity):.4f}'.rstrip('0').rstrip('.'),
+            f'${float(t.price):,.2f}',
+            f'${float(t.total_amount):,.2f}',
+            (t.notes[:20] + '…') if t.notes and len(t.notes) > 20 else (t.notes or '—'),
+        ])
+
+    if len(table_data) == 1:
+        story.append(Paragraph('No transactions found for the selected filters.', styles['Normal']))
+    else:
+        col_widths = [1.1*inch, 0.7*inch, 1.7*inch, 0.6*inch, 0.6*inch, 0.9*inch, 0.9*inch, 1.0*inch, 1.6*inch]
+        tx_table = Table(table_data, colWidths=col_widths, repeatRows=1)
+
+        style_cmds = [
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#111827')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#d1d5db')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f3f4f6')]),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]
+        # Color buy/sell rows in the "Type" column (index 4)
+        for i, t in enumerate(transactions, start=1):
+            color = colors.HexColor('#16a34a') if t.transaction_type == 'buy' else colors.HexColor('#dc2626')
+            style_cmds.append(('TEXTCOLOR', (4, i), (4, i), color))
+            style_cmds.append(('FONTNAME', (4, i), (4, i), 'Helvetica-Bold'))
+
+        tx_table.setStyle(TableStyle(style_cmds))
+        story.append(tx_table)
+
+    story.append(Spacer(1, 16))
+    story.append(Paragraph(
+        'Generated by Portfolio Analyzer. Past performance is not indicative of future results.',
+        styles['Italic']
+    ))
+
+    doc.build(story)
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+
+    filename = f'transactions_{request.user.username}_{date.today().isoformat()}.pdf'
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 
 @login_required
