@@ -1,5 +1,9 @@
+import io
+import csv
+from django.http import HttpResponse
 import csv
 import io
+
 import yfinance as yf
 import numpy as np
 from datetime import date, timedelta
@@ -352,6 +356,14 @@ def transactions(request):
     })
 
 def _filtered_transactions(request, portfolio):
+
+    """Shared filtering logic for exports: ?start=YYYY-MM-DD&end=YYYY-MM-DD&symbol=AAPL&type=buy"""
+    qs = portfolio.transactions.all()
+
+    start = request.GET.get('start')
+    end   = request.GET.get('end')
+    symbol = request.GET.get('symbol', '').strip().upper()
+    ttype  = request.GET.get('type', '').strip().lower()
     """ Helper function to filter transactions based on date, symbol and type."""
     qs = portfolio.transactions.all()
 
@@ -371,6 +383,10 @@ def _filtered_transactions(request, portfolio):
 
     return qs
 
+
+@login_required
+def export_transactions_csv(request):
+    portfolio    = get_or_create_portfolio(request.user)
 @login_required
 def export_transactions_csv(request):
     portfolio = get_or_create_portfolio(request.user)
@@ -381,6 +397,9 @@ def export_transactions_csv(request):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
     writer = csv.writer(response)
+    writer.writerow(['Date', 'Symbol', 'Name', 'Asset Type', 'Transaction Type',
+                      'Quantity', 'Price', 'Total Amount', 'Notes'])
+
     writer.writerow(['Date', 'Symbol', 'Name', 'Asset Type', 'Transaction Type', 'Quantity', 'Price', 'Total Amount', 'Notes'])
 
     for t in transactions:
@@ -395,6 +414,8 @@ def export_transactions_csv(request):
             f'{float(t.total_amount):.2f}',
             t.notes or '',
         ])
+    return response
+
 
 
 @login_required
@@ -501,7 +522,8 @@ def export_transactions_pdf(request):
     filename = f'transactions_{request.user.username}_{date.today().isoformat()}.pdf'
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response     
+    return response
+
 
 @login_required
 def price_alerts(request):
