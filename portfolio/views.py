@@ -1,10 +1,14 @@
 import io
 import csv
 from django.http import HttpResponse
+import csv
+import io
+
 import yfinance as yf
 import numpy as np
 from datetime import date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
@@ -348,10 +352,11 @@ def transactions(request):
     portfolio = get_or_create_portfolio(request.user)
     return render(request, 'portfolio/transactions.html', {
         'portfolio':    portfolio,
-        'transactions': portfolio.transactions.all(),
+        'transactions': _filtered_transactions(request, portfolio),
     })
 
 def _filtered_transactions(request, portfolio):
+
     """Shared filtering logic for exports: ?start=YYYY-MM-DD&end=YYYY-MM-DD&symbol=AAPL&type=buy"""
     qs = portfolio.transactions.all()
 
@@ -359,6 +364,13 @@ def _filtered_transactions(request, portfolio):
     end   = request.GET.get('end')
     symbol = request.GET.get('symbol', '').strip().upper()
     ttype  = request.GET.get('type', '').strip().lower()
+    """ Helper function to filter transactions based on date, symbol and type."""
+    qs = portfolio.transactions.all()
+
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+    symbol = request.GET.get('symbol', '').strip().upper()
+    ttype = request.GET.get('type', '').strip().upper()
 
     if start:
         qs = qs.filter(date__date__gte=start)
@@ -375,6 +387,9 @@ def _filtered_transactions(request, portfolio):
 @login_required
 def export_transactions_csv(request):
     portfolio    = get_or_create_portfolio(request.user)
+@login_required
+def export_transactions_csv(request):
+    portfolio = get_or_create_portfolio(request.user)
     transactions = _filtered_transactions(request, portfolio)
 
     filename = f'transactions_{request.user.username}_{date.today().isoformat()}.csv'
@@ -384,6 +399,8 @@ def export_transactions_csv(request):
     writer = csv.writer(response)
     writer.writerow(['Date', 'Symbol', 'Name', 'Asset Type', 'Transaction Type',
                       'Quantity', 'Price', 'Total Amount', 'Notes'])
+
+    writer.writerow(['Date', 'Symbol', 'Name', 'Asset Type', 'Transaction Type', 'Quantity', 'Price', 'Total Amount', 'Notes'])
 
     for t in transactions:
         writer.writerow([
@@ -397,8 +414,8 @@ def export_transactions_csv(request):
             f'{float(t.total_amount):.2f}',
             t.notes or '',
         ])
-
     return response
+
 
 
 @login_required

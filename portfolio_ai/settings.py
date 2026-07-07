@@ -89,7 +89,16 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# ManifestStaticFilesStorage requires `collectstatic` to have been run (it needs
+# a staticfiles.json manifest to resolve {% static %} URLs). That's fine for
+# production, but painful in local dev since every CSS edit would need a fresh
+# collectstatic. Use plain storage in DEBUG so static files are served straight
+# from STATICFILES_DIRS with no manifest step required.
+if DEBUG:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
