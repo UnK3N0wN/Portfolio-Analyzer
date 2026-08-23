@@ -94,7 +94,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="dash-card-title mb-0">
                 <i class="bi bi-graph-up me-2" style="color:var(--accent)"></i>
-                30-Day Price History + 7-Day Prediction
+                Price History (3mo) + 7-Day Prediction
             </h5>
             <div class="d-flex align-items-center gap-3" style="font-size:0.75rem;">
                 <span style="display:flex; align-items:center; gap:0.3rem;">
@@ -105,17 +105,42 @@
                     <span style="width:16px; height:2px; background:{% if trend == 'up' %}var(--accent){% else %}var(--danger){% endif %}; display:inline-block; border-radius:2px; border-top: 2px dashed;"></span>
                     <span style="color:var(--text-muted);">Predicted ({% if trend == 'up' %}▲ Upward{% else %}▼ Downward{% endif %})</span>
                 </span>
+                <span style="display:flex; align-items:center; gap:0.3rem;">
+                    <span style="width:16px; height:2px; background:#8a94a6; display:inline-block; border-radius:2px;"></span>
+                    <span style="color:var(--text-muted);">Bollinger Bands</span>
+                </span>
             </div>
         </div>
-        <div style="position:relative; height:300px;">
+        <div style="position:relative; height:320px;">
             <canvas id="predictionChart"></canvas>
         </div>
 
         <!-- Prediction disclaimer -->
         <p style="color:var(--text-muted); font-size:0.72rem; margin-top:0.75rem; text-align:center;">
             <i class="bi bi-info-circle me-1"></i>
-            Prediction uses linear regression on 30-day data. For educational purposes only — not financial advice.
+            Prediction uses an ensemble model (Random Forest + Holt's exponential smoothing, model: {{ pred_model }})
+            with a shaded confidence band. For educational purposes only — not financial advice.
         </p>
+    </div>
+
+    <!-- MACD + RSI -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-6">
+            <div class="dash-card h-100">
+                <h5 class="dash-card-title mb-3"><i class="bi bi-activity me-2" style="color:var(--accent)"></i>MACD</h5>
+                <div style="position:relative; height:220px;">
+                    <canvas id="macdChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="dash-card h-100">
+                <h5 class="dash-card-title mb-3"><i class="bi bi-speedometer2 me-2" style="color:var(--accent)"></i>RSI (14)</h5>
+                <div style="position:relative; height:220px;">
+                    <canvas id="rsiChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Market Stats -->
@@ -161,6 +186,11 @@
     const histPrices = {{ prices|safe }};
     const predDates  = {{ fut_dates|safe }};
     const predPrices = {{ predicted|safe }};
+    const predUpper  = {{ pred_upper|safe }};
+    const predLower  = {{ pred_lower|safe }};
+    const bbMid      = {{ bb_mid|safe }};
+    const bbUpper    = {{ bb_upper|safe }};
+    const bbLower    = {{ bb_lower|safe }};
     const trend      = "{{ trend }}";
     const predColor  = trend === 'up' ? '#00c896' : '#f04060';
 
@@ -173,6 +203,15 @@
     // Prediction dataset — null for historical section, then predicted
     // Connect at the last historical point
     const predData = [...Array(histPrices.length - 1).fill(null), histPrices[histPrices.length - 1], ...predPrices];
+
+    // Confidence band around the prediction (null over the historical section)
+    const upperData = [...Array(histPrices.length - 1).fill(null), histPrices[histPrices.length - 1], ...predUpper];
+    const lowerData = [...Array(histPrices.length - 1).fill(null), histPrices[histPrices.length - 1], ...predLower];
+
+    // Bollinger Bands overlay on the historical section only
+    const bbMidData   = [...bbMid,   ...Array(predDates.length).fill(null)];
+    const bbUpperData = [...bbUpper, ...Array(predDates.length).fill(null)];
+    const bbLowerData = [...bbLower, ...Array(predDates.length).fill(null)];
 
     new Chart(document.getElementById('predictionChart'), {
         type: 'line',
@@ -191,6 +230,7 @@
                     fill:                true,
                     tension:             0.3,
                     spanGaps:            false,
+                    order:               1,
                 },
                 {
                     label:               '7-Day Prediction',
@@ -206,6 +246,67 @@
                     fill:                false,
                     tension:             0.2,
                     spanGaps:            false,
+                    order:               0,
+                },
+                {
+                    label:               'Confidence Upper',
+                    data:                upperData,
+                    borderColor:         'transparent',
+                    backgroundColor:     'rgba(138,148,166,0.12)',
+                    pointRadius:         0,
+                    fill:                '+1',
+                    tension:             0.2,
+                    spanGaps:            false,
+                    order:               2,
+                },
+                {
+                    label:               'Confidence Lower',
+                    data:                lowerData,
+                    borderColor:         'transparent',
+                    backgroundColor:     'transparent',
+                    pointRadius:         0,
+                    fill:                false,
+                    tension:             0.2,
+                    spanGaps:            false,
+                    order:               2,
+                },
+                {
+                    label:               'Bollinger Upper',
+                    data:                bbUpperData,
+                    borderColor:         'rgba(138,148,166,0.6)',
+                    backgroundColor:     'transparent',
+                    borderWidth:         1,
+                    borderDash:          [2, 3],
+                    pointRadius:         0,
+                    fill:                false,
+                    tension:             0.2,
+                    spanGaps:            false,
+                    order:               3,
+                },
+                {
+                    label:               'Bollinger Middle (SMA20)',
+                    data:                bbMidData,
+                    borderColor:         'rgba(138,148,166,0.35)',
+                    backgroundColor:     'transparent',
+                    borderWidth:         1,
+                    pointRadius:         0,
+                    fill:                false,
+                    tension:             0.2,
+                    spanGaps:            false,
+                    order:               3,
+                },
+                {
+                    label:               'Bollinger Lower',
+                    data:                bbLowerData,
+                    borderColor:         'rgba(138,148,166,0.6)',
+                    backgroundColor:     'transparent',
+                    borderWidth:         1,
+                    borderDash:          [2, 3],
+                    pointRadius:         0,
+                    fill:                false,
+                    tension:             0.2,
+                    spanGaps:            false,
+                    order:               3,
                 }
             ]
         },
@@ -222,12 +323,9 @@
                     titleColor:      '#dde6f0',
                     bodyColor:       '#5a7090',
                     padding:         10,
+                    filter: ctx => !['Confidence Upper', 'Confidence Lower'].includes(ctx.dataset.label) && ctx.parsed.y !== null,
                     callbacks: {
-                        label: ctx => {
-                            if (ctx.parsed.y === null) return null;
-                            const label = ctx.datasetIndex === 0 ? 'Price' : 'Predicted';
-                            return ` ${label}: $${ctx.parsed.y.toFixed(2)}`;
-                        }
+                        label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`
                     }
                 }
             },
@@ -248,6 +346,118 @@
                     ticks: { color: '#5a7090', callback: v => '$' + v.toLocaleString() },
                     grid:  { color: '#1e2d45' }
                 }
+            }
+        }
+    });
+
+    // ── MACD Chart ──────────────────────────────────────────────
+    const macdLine   = {{ macd_line|safe }};
+    const macdSignal = {{ macd_signal|safe }};
+    const macdHist   = {{ macd_hist|safe }};
+
+    new Chart(document.getElementById('macdChart'), {
+        data: {
+            labels: histDates,
+            datasets: [
+                {
+                    type:  'bar',
+                    label: 'Histogram',
+                    data:  macdHist,
+                    backgroundColor: macdHist.map(v => v >= 0 ? 'rgba(0,200,150,0.5)' : 'rgba(240,64,96,0.5)'),
+                    order: 2,
+                },
+                {
+                    type:        'line',
+                    label:       'MACD',
+                    data:        macdLine,
+                    borderColor: '#00c896',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension:     0.2,
+                    order:       1,
+                },
+                {
+                    type:        'line',
+                    label:       'Signal',
+                    data:        macdSignal,
+                    borderColor: '#f0a030',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension:     0.2,
+                    order:       1,
+                }
+            ]
+        },
+        options: {
+            responsive:          true,
+            maintainAspectRatio: false,
+            interaction:         { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { display: true, labels: { color: '#5a7090', boxWidth: 12, font: { size: 10 } } },
+                tooltip: {
+                    backgroundColor: '#0d1526', borderColor: '#1e2d45', borderWidth: 1,
+                    titleColor: '#dde6f0', bodyColor: '#5a7090', padding: 10,
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#5a7090', maxTicksLimit: 8 }, grid: { color: '#1e2d45' } },
+                y: { ticks: { color: '#5a7090' }, grid: { color: '#1e2d45' } }
+            }
+        }
+    });
+
+    // ── RSI Chart ───────────────────────────────────────────────
+    const rsiValues = {{ rsi_values|safe }};
+
+    new Chart(document.getElementById('rsiChart'), {
+        type: 'line',
+        data: {
+            labels: histDates,
+            datasets: [
+                {
+                    label:           'RSI',
+                    data:            rsiValues,
+                    borderColor:     '#8a94a6',
+                    backgroundColor: 'rgba(138,148,166,0.08)',
+                    borderWidth:     2,
+                    pointRadius:     0,
+                    fill:            true,
+                    tension:         0.25,
+                },
+                {
+                    label:       'Overbought (70)',
+                    data:        Array(histDates.length).fill(70),
+                    borderColor: 'rgba(240,64,96,0.5)',
+                    borderWidth: 1,
+                    borderDash:  [4, 4],
+                    pointRadius: 0,
+                    fill:        false,
+                },
+                {
+                    label:       'Oversold (30)',
+                    data:        Array(histDates.length).fill(30),
+                    borderColor: 'rgba(0,200,150,0.5)',
+                    borderWidth: 1,
+                    borderDash:  [4, 4],
+                    pointRadius: 0,
+                    fill:        false,
+                }
+            ]
+        },
+        options: {
+            responsive:          true,
+            maintainAspectRatio: false,
+            interaction:         { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0d1526', borderColor: '#1e2d45', borderWidth: 1,
+                    titleColor: '#dde6f0', bodyColor: '#5a7090', padding: 10,
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#5a7090', maxTicksLimit: 8 }, grid: { color: '#1e2d45' } },
+                y: { min: 0, max: 100, ticks: { color: '#5a7090' }, grid: { color: '#1e2d45' } }
             }
         }
     });

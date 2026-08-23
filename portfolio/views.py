@@ -14,6 +14,13 @@ from ai.llm import ask_llm, analyze_portfolio, get_risk_assessment, get_buy_sell
 from ai.utils import get_portfolio_summary, get_asset_allocation
 from ai.predict import get_portfolio_trend
 
+try:
+    from sklearn.ensemble import RandomForestRegressor
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+
+
 
 def get_or_create_portfolio(user):
     portfolio, _ = Portfolio.objects.get_or_create(user=user)
@@ -76,18 +83,161 @@ def get_weekly_snapshots(portfolio):
     seven_days_ago = date.today() - timedelta(days=7)
     return portfolio.snapshots.filter(date__gte=seven_days_ago).order_by('date')
 
+def calculate_ema(series, period):
+    """Exponential moving average (used by MACD and internally elsewhere)."""
+    series = np.array(series, dtype=float)
+    if len(series) == 0:
+        return series
+    ema = np.zeros_like(series)
+    k = 2.0 / (period + 1)
+    ema[0] = series[0]
+    for i in range(1, len(series)):
+        ema[i] = series[i] * k + ema[i - 1] * (1 - k)
+    return ema
+
+
+def calculate_macd(prices, fast=12, slow=26, signal=9):
+    """MACD line, signal line, and histogram."""
+    prices = np.array(prices, dtype=float)
+    if len(prices) < 2:
+        return [], [], []
+    ema_fast    = calculate_ema(prices, fast)
+    ema_slow    = calculate_ema(prices, slow)
+    macd_line   = ema_fast - ema_slow
+    signal_line = calculate_ema(macd_line, signal)
+    histogram   = macd_line - signal_line
+    return (
+        [round(float(v), 4) for v in macd_line],
+        [round(float(v), 4) for v in signal_line],
+        [round(float(v), 4) for v in histogram],
+    )
+
+
+def calculate_rsi(prices, period=14):
+    """Relative Strength Index (Wilder's smoothing)."""
+    prices = np.array(prices, dtype=float)
+    n = len(prices)
+    if n < 2:
+        return [50.0] * n
+
+    deltas = np.diff(prices)
+    rsi = np.zeros(n)
+    rsi[0] = 50.0
+
+    seed_len = min(period, len(deltas))
+    seed = deltas[:seed_len]
+    up   = seed[seed > 0].sum() / period if seed_len else 0
+    down = -seed[seed < 0].sum() / period if seed_len else 0
+
+    for i in range(1, n):
+        if i <= seed_len:
+            rs = up / down if down != 0 else np.inf
+            rsi[i] = 100.0 - (100.0 / (1.0 + rs)) if down != 0 else 100.0
+            continue
+        delta   = deltas[i - 1]
+        upval   = delta if delta > 0 else 0.0
+        downval = -delta if delta < 0 else 0.0
+        up      = (up * (period - 1) + upval) / period
+        down    = (down * (period - 1) + downval) / period
+        rs      = up / down if down != 0 else np.inf
+        rsi[i]  = 100.0 - (100.0 / (1.0 + rs)) if down != 0 else 100.0
+
+    return [round(float(v), 2) for v in rsi]
+
+
+def calculate_bollinger_bands(prices, period=20, num_std=2):
+    """Middle (SMA), upper and lower Bollinger Bands."""
+    prices = np.array(prices, dtype=float)
+    n = len(prices)
+    mid   = np.zeros(n)
+    upper = np.zeros(n)
+    lower = np.zeros(n)
+    for i in range(n):
+        window   = prices[max(0, i - period + 1):i + 1]
+        mid[i]   = np.mean(window)
+        std      = np.std(window)
+        upper[i] = mid[i] + num_std * std
+        lower[i] = mid[i] - num_std * std
+    return (
+        [round(float(v), 2) for v in mid],
+        [round(float(v), 2) for v in upper],
+        [round(float(v), 2) for v in lower],
+    )
+
 
 def predict_prices(prices, days=7):
-    """Linear regression price prediction."""
-    if len(prices) < 5:
-        return []
-    try:
-        x      = np.arange(len(prices))
-        coeffs = np.polyfit(x, prices, 1)
-        future = np.arange(len(prices), len(prices) + days)
-        return [round(float(p), 2) for p in np.polyval(coeffs, future)]
-    except Exception:
-        return []
+    prices = np.array(prices, dtype=float)
+    n = len(prices)
+
+    if n < 10:
+        return {'predicted': [], 'upper': [], 'lower': [], 'model': 'insufficient_data'}
+
+    lookback = 5
+
+    def build_features(series):
+        feats, targets = [], []
+        for i in range(lookback, len(series)):
+            window     = series[i - lookback:i]
+            ma5        = np.mean(series[max(0, i - 5):i])
+            ma10       = np.mean(series[max(0, i - 10):i]) if i >= 10 else ma5
+            momentum   = series[i - 1] - series[i - lookback]
+            volatility = np.std(series[max(0, i - 10):i]) if i >= 2 else 0.0
+            feats.append([*window, ma5, ma10, momentum, volatility])
+            targets.append(series[i])
+        return np.array(feats), np.array(targets)
+
+    X, y = build_features(prices)
+
+    rf = None
+    model_name = 'holt_linear'
+    if SKLEARN_AVAILABLE and len(X) >= 8:
+        try:
+            rf = RandomForestRegressor(
+                n_estimators=200, max_depth=4, min_samples_leaf=2, random_state=42
+            )
+            rf.fit(X, y)
+            residual_std = float(np.std(y - rf.predict(X)))
+            model_name = 'ensemble_rf_holt'
+        except Exception:
+            rf = None
+            residual_std = float(np.std(np.diff(prices))) if n > 1 else 0.0
+    else:
+        residual_std = float(np.std(np.diff(prices))) if n > 1 else 0.0
+
+    # Holt's linear (double exponential smoothing) trend
+    alpha, beta = 0.5, 0.3
+    level = prices[0]
+    trend = prices[1] - prices[0]
+    for p in prices[1:]:
+        last_level = level
+        level = alpha * p + (1 - alpha) * (level + trend)
+        trend = beta * (level - last_level) + (1 - beta) * trend
+
+    history   = list(prices)
+    predicted = []
+    for step in range(1, days + 1):
+        holt_forecast = level + step * trend
+
+        if rf is not None:
+            window     = np.array(history[-lookback:])
+            ma5        = np.mean(history[-5:])
+            ma10       = np.mean(history[-10:]) if len(history) >= 10 else ma5
+            momentum   = history[-1] - history[-lookback]
+            volatility = np.std(history[-10:]) if len(history) >= 2 else 0.0
+            feat       = np.array([[*window, ma5, ma10, momentum, volatility]])
+            rf_forecast = float(rf.predict(feat)[0])
+            blended = 0.6 * rf_forecast + 0.4 * holt_forecast
+        else:
+            blended = holt_forecast
+
+        predicted.append(round(float(blended), 2))
+        history.append(blended)
+
+    band  = residual_std * 1.5
+    upper = [round(float(p + band * np.sqrt(i + 1)), 2) for i, p in enumerate(predicted)]
+    lower = [round(float(max(p - band * np.sqrt(i + 1), 0)), 2) for i, p in enumerate(predicted)]
+
+    return {'predicted': predicted, 'upper': upper, 'lower': lower, 'model': model_name}
 
 
 def landing(request):
@@ -135,7 +285,6 @@ def portfolio_view(request):
 
 @login_required
 def holding_detail(request, holding_id):
-    """Holding detail page with 30-day history + 7-day prediction chart."""
     portfolio = get_or_create_portfolio(request.user)
     holding   = get_object_or_404(Holding, id=holding_id, portfolio=portfolio)
 
@@ -146,7 +295,9 @@ def holding_detail(request, holding_id):
 
     try:
         ticker = yf.Ticker(holding.symbol)
-        hist   = ticker.history(period='1mo')
+        # 3 months gives enough history for stable MACD/RSI/Bollinger Bands
+        # and a better-fed prediction model than the old 30-day window.
+        hist   = ticker.history(period='3mo')
         info   = ticker.info
 
         for row in hist.itertuples():
@@ -162,12 +313,21 @@ def holding_detail(request, holding_id):
     except Exception:
         pass
 
-    # 7-day prediction
-    predicted = predict_prices(prices, days=7)
+    # 7-day ensemble prediction (Random Forest + Holt's exponential smoothing)
+    prediction = predict_prices(prices, days=7)
+    predicted  = prediction['predicted']
+    pred_upper = prediction['upper']
+    pred_lower = prediction['lower']
+    pred_model = prediction['model']
+
+    # Technical indicators
+    macd_line, macd_signal, macd_hist = calculate_macd(prices)
+    rsi_values                        = calculate_rsi(prices)
+    bb_mid, bb_upper, bb_lower        = calculate_bollinger_bands(prices)
 
     # Future dates
     if history_dates:
-        last     = date.fromisoformat(history_dates[-1])
+        last      = date.fromisoformat(history_dates[-1])
         fut_dates = [(last + timedelta(days=i+1)).isoformat() for i in range(len(predicted))]
     else:
         fut_dates = []
@@ -184,14 +344,24 @@ def holding_detail(request, holding_id):
     }
 
     return render(request, 'portfolio/holding_detail.html', {
-        'holding':   holding,
-        'history':   history,
-        'predicted': predicted,
-        'fut_dates': fut_dates,
-        'trend':     trend,
-        'stats':     stats,
-        'prices':    prices,
-        'history_dates': history_dates,
+        'holding':        holding,
+        'history':        history,
+        'predicted':      predicted,
+        'pred_upper':     pred_upper,
+        'pred_lower':     pred_lower,
+        'pred_model':     pred_model,
+        'fut_dates':      fut_dates,
+        'trend':          trend,
+        'stats':          stats,
+        'prices':         prices,
+        'history_dates':  history_dates,
+        'macd_line':      macd_line,
+        'macd_signal':    macd_signal,
+        'macd_hist':      macd_hist,
+        'rsi_values':     rsi_values,
+        'bb_mid':         bb_mid,
+        'bb_upper':       bb_upper,
+        'bb_lower':       bb_lower,
     })
 
 

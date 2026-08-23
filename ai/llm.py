@@ -15,8 +15,8 @@ except ImportError:
 
 
 # ── Models ────────────────────────────────────────────────────────────────
-FAST_MODEL  = "llama-3.1-8b-instant"       # Fast + cheap
-SMART_MODEL = "llama-3.3-70b-versatile"    # Deep analysis
+FAST_MODEL = "openai/gpt-oss-20b"
+SMART_MODEL = "openai/gpt-oss-120b"
 
 
 # ── Optimized System Prompt (SHORT = LESS TOKENS) ─────────────────────────
