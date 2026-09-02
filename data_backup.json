@@ -1,0 +1,1170 @@
+[
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$Yfel8x4UfGNRk6gEhs0OsB$9hDOdmpKTn/iafBa2uSkwcojMip7bZ97RZqi4xVVzzE=",
+    "last_login": "2026-08-18T14:11:50.051Z",
+    "is_superuser": true,
+    "username": "Blesson",
+    "first_name": "Blesson",
+    "last_name": "Reji",
+    "email": "itsbless24@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-03-17T16:36:07.177Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$lUfcLTNtrNYnTpGunDc1Mv$KrGe1mnG5dTz19lvBHCnxvKL5w8rButRmgFq1xuCVhc=",
+    "last_login": "2026-03-21T08:01:08.602Z",
+    "is_superuser": false,
+    "username": "unknownman24",
+    "first_name": "Unknown",
+    "last_name": "Man",
+    "email": "unknownman24@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-03-21T08:01:06.972Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$LFw23WSHf2K77Qn4fR1zYE$XXB1ILVL0tOm6TUgM9hOQF5ve0zxpCE808ILugf+dQ4=",
+    "last_login": "2026-03-22T06:28:22.927Z",
+    "is_superuser": false,
+    "username": "analyzer",
+    "first_name": "If",
+    "last_name": "Else",
+    "email": "ifelse@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-03-22T06:28:21.571Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$nlvm898Ew8x7Hof8RNKec0$26PCLbJm8pqFLUmtiu4Zy8WzHKdXR8mhAWi7rNnCv6w=",
+    "last_login": "2026-03-25T06:26:47.659Z",
+    "is_superuser": false,
+    "username": "anakin",
+    "first_name": "Anakin",
+    "last_name": "Sky",
+    "email": "anakin@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-03-25T06:26:46.739Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$4SdlYlT90u8tAEEdABCjPF$na9qYZE3hJ7JJ8IpX0obvcdUl+97d9jPui3iFlxxHXc=",
+    "last_login": "2026-03-26T07:20:57.365Z",
+    "is_superuser": false,
+    "username": "admin23",
+    "first_name": "Admin",
+    "last_name": "One",
+    "email": "admin23@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-03-26T07:20:56.477Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.profile",
+  "pk": 1,
+  "fields": {
+    "user": [
+      "Blesson"
+    ],
+    "bio": "",
+    "avatar": "avatars/login.jpeg",
+    "created_at": "2026-03-17T16:36:08.260Z",
+    "updated_at": "2026-08-18T14:11:50.065Z"
+  }
+},
+{
+  "model": "users.profile",
+  "pk": 2,
+  "fields": {
+    "user": [
+      "unknownman24"
+    ],
+    "bio": null,
+    "avatar": "",
+    "created_at": "2026-03-21T08:01:08.572Z",
+    "updated_at": "2026-03-21T08:01:08.610Z"
+  }
+},
+{
+  "model": "users.profile",
+  "pk": 3,
+  "fields": {
+    "user": [
+      "analyzer"
+    ],
+    "bio": null,
+    "avatar": "",
+    "created_at": "2026-03-22T06:28:22.893Z",
+    "updated_at": "2026-03-22T06:28:22.937Z"
+  }
+},
+{
+  "model": "users.profile",
+  "pk": 4,
+  "fields": {
+    "user": [
+      "anakin"
+    ],
+    "bio": null,
+    "avatar": "",
+    "created_at": "2026-03-25T06:26:47.626Z",
+    "updated_at": "2026-03-25T06:26:47.670Z"
+  }
+},
+{
+  "model": "users.profile",
+  "pk": 5,
+  "fields": {
+    "user": [
+      "admin23"
+    ],
+    "bio": null,
+    "avatar": "",
+    "created_at": "2026-03-26T07:20:57.341Z",
+    "updated_at": "2026-03-26T07:20:57.372Z"
+  }
+},
+{
+  "model": "portfolio.portfolio",
+  "pk": 1,
+  "fields": {
+    "user": [
+      "Blesson"
+    ],
+    "name": "My Portfolio",
+    "created_at": "2026-03-17T16:37:45.814Z",
+    "updated_at": "2026-03-17T16:37:45.814Z"
+  }
+},
+{
+  "model": "portfolio.portfolio",
+  "pk": 2,
+  "fields": {
+    "user": [
+      "unknownman24"
+    ],
+    "name": "My Portfolio",
+    "created_at": "2026-03-21T08:01:08.643Z",
+    "updated_at": "2026-03-21T08:01:08.643Z"
+  }
+},
+{
+  "model": "portfolio.portfolio",
+  "pk": 3,
+  "fields": {
+    "user": [
+      "analyzer"
+    ],
+    "name": "My Portfolio",
+    "created_at": "2026-03-22T06:28:22.982Z",
+    "updated_at": "2026-03-22T06:28:22.982Z"
+  }
+},
+{
+  "model": "portfolio.portfolio",
+  "pk": 4,
+  "fields": {
+    "user": [
+      "anakin"
+    ],
+    "name": "My Portfolio",
+    "created_at": "2026-03-25T06:26:47.709Z",
+    "updated_at": "2026-03-25T06:26:47.709Z"
+  }
+},
+{
+  "model": "portfolio.portfolio",
+  "pk": 5,
+  "fields": {
+    "user": [
+      "admin23"
+    ],
+    "name": "My Portfolio",
+    "created_at": "2026-03-26T07:20:57.396Z",
+    "updated_at": "2026-03-26T07:20:57.396Z"
+  }
+},
+{
+  "model": "portfolio.holding",
+  "pk": 7,
+  "fields": {
+    "portfolio": 2,
+    "symbol": "BTC-USD",
+    "name": "Bitcoin",
+    "asset_type": "stock",
+    "quantity": "2.00000000",
+    "avg_price": "70695.25000000",
+    "current_price": "70698.33593750",
+    "last_updated": "2026-03-21T08:03:25.979Z"
+  }
+},
+{
+  "model": "portfolio.holding",
+  "pk": 8,
+  "fields": {
+    "portfolio": 5,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "quantity": "2.00000000",
+    "avg_price": "252.62000000",
+    "current_price": "252.61999512",
+    "last_updated": "2026-03-26T07:24:25.409Z"
+  }
+},
+{
+  "model": "portfolio.holding",
+  "pk": 10,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "quantity": "6.75000000",
+    "avg_price": "298.39074074",
+    "current_price": "313.14001465",
+    "last_updated": "2026-08-26T18:33:06.267Z"
+  }
+},
+{
+  "model": "portfolio.holding",
+  "pk": 11,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "MSFT",
+    "name": "Microsoft",
+    "asset_type": "stock",
+    "quantity": "2.00000000",
+    "avg_price": "410.22000000",
+    "current_price": "494.33999634",
+    "last_updated": "2026-08-26T18:33:06.498Z"
+  }
+},
+{
+  "model": "portfolio.holding",
+  "pk": 12,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "TSLA",
+    "name": "Tesla",
+    "asset_type": "stock",
+    "quantity": "5.00000000",
+    "avg_price": "391.95000000",
+    "current_price": "345.50000000",
+    "last_updated": "2026-08-26T18:33:06.745Z"
+  }
+},
+{
+  "model": "portfolio.holding",
+  "pk": 13,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "ABNB",
+    "name": "Airbonb Inc",
+    "asset_type": "stock",
+    "quantity": "7.00000000",
+    "avg_price": "137.51000000",
+    "current_price": "188.99000549",
+    "last_updated": "2026-08-26T18:33:06.980Z"
+  }
+},
+{
+  "model": "portfolio.holding",
+  "pk": 14,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "NVDA",
+    "name": "Nvidia Corporation",
+    "asset_type": "stock",
+    "quantity": "8.00000000",
+    "avg_price": "198.87000000",
+    "current_price": "210.94500732",
+    "last_updated": "2026-08-26T18:33:07.214Z"
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 1,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "5.00000000",
+    "price": "288.62000000",
+    "total_amount": "1443.10000000",
+    "date": "2026-03-17T17:16:36.966Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 2,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "5.00000000",
+    "price": "253.85000000",
+    "total_amount": "1269.25000000",
+    "date": "2026-03-17T17:17:17.399Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 3,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "TSLA",
+    "name": "Tesla Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "5.00000000",
+    "price": "396.95000000",
+    "total_amount": "1984.75000000",
+    "date": "2026-03-17T17:21:19.317Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 4,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "2.00000000",
+    "price": "248.96000000",
+    "total_amount": "497.92000000",
+    "date": "2026-03-20T08:49:29.819Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 5,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "8.00000000",
+    "price": "247.36000000",
+    "total_amount": "1978.88000000",
+    "date": "2026-03-20T14:02:33.442Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 6,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "TSLA",
+    "name": "Tesla Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "4.00000000",
+    "price": "371.89000000",
+    "total_amount": "1487.56000000",
+    "date": "2026-03-20T14:03:19.314Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 7,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "BTC-USD",
+    "name": "Bitcoin",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "1.00000000",
+    "price": "70695.25000000",
+    "total_amount": "70695.25000000",
+    "date": "2026-03-21T07:59:12.155Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 8,
+  "fields": {
+    "portfolio": 2,
+    "symbol": "BTC-USD",
+    "name": "Bitcoin",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "2.00000000",
+    "price": "70695.25000000",
+    "total_amount": "141390.50000000",
+    "date": "2026-03-21T08:01:58.449Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 9,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "sell",
+    "quantity": "8.00000000",
+    "price": "247.99000000",
+    "total_amount": "1983.92000000",
+    "date": "2026-03-22T12:39:30.254Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 10,
+  "fields": {
+    "portfolio": 5,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "2.00000000",
+    "price": "252.62000000",
+    "total_amount": "505.24000000",
+    "date": "2026-03-26T07:22:58.897Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 11,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "4.00000000",
+    "price": "288.02000000",
+    "total_amount": "1152.08000000",
+    "date": "2026-04-02T06:18:05.647Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 12,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "TSLA",
+    "name": "Tesla Inc",
+    "asset_type": "stock",
+    "transaction_type": "sell",
+    "quantity": "4.00000000",
+    "price": "381.26000000",
+    "total_amount": "1525.04000000",
+    "date": "2026-04-02T06:19:13.752Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 13,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "BTC-USD",
+    "name": "Bitcoin",
+    "asset_type": "stock",
+    "transaction_type": "sell",
+    "quantity": "1.00000000",
+    "price": "74833.20000000",
+    "total_amount": "74833.20000000",
+    "date": "2026-04-16T13:16:32.558Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 14,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "sell",
+    "quantity": "4.00000000",
+    "price": "266.43000000",
+    "total_amount": "1065.72000000",
+    "date": "2026-04-16T13:16:39.407Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 15,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "5.00000000",
+    "price": "266.43000000",
+    "total_amount": "1332.15000000",
+    "date": "2026-04-16T13:18:18.460Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 16,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "MSFT",
+    "name": "Microsoft",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "2.00000000",
+    "price": "410.22000000",
+    "total_amount": "820.44000000",
+    "date": "2026-04-16T13:20:04.930Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 17,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "TSLA",
+    "name": "Tesla",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "5.00000000",
+    "price": "391.95000000",
+    "total_amount": "1959.75000000",
+    "date": "2026-04-16T13:21:39.653Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 18,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "ABNB",
+    "name": "Airbonb Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "7.00000000",
+    "price": "137.51000000",
+    "total_amount": "962.57000000",
+    "date": "2026-04-16T13:23:16.830Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 19,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "NVDA",
+    "name": "Nvidia Corporation",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "8.00000000",
+    "price": "198.87000000",
+    "total_amount": "1590.96000000",
+    "date": "2026-04-16T13:25:46.133Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 20,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "2.00000000",
+    "price": "263.40000000",
+    "total_amount": "526.80000000",
+    "date": "2026-04-17T07:10:28.166Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 21,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "sell",
+    "quantity": "5.25000000",
+    "price": "263.40000000",
+    "total_amount": "1382.85000000",
+    "date": "2026-04-17T07:10:47.407Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.transaction",
+  "pk": 22,
+  "fields": {
+    "portfolio": 1,
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "transaction_type": "buy",
+    "quantity": "5.00000000",
+    "price": "309.88000000",
+    "total_amount": "1549.40000000",
+    "date": "2026-08-18T14:12:19.880Z",
+    "notes": ""
+  }
+},
+{
+  "model": "portfolio.pricealert",
+  "pk": 2,
+  "fields": {
+    "user": [
+      "Blesson"
+    ],
+    "symbol": "TSLA",
+    "name": "Tesla Inc",
+    "alert_type": "above",
+    "target_price": "400.00000000",
+    "current_price": "409.39999390",
+    "is_triggered": true,
+    "is_active": true,
+    "created_at": "2026-03-25T08:48:24.143Z",
+    "triggered_at": "2026-07-07T14:58:44.016Z"
+  }
+},
+{
+  "model": "portfolio.pricealert",
+  "pk": 3,
+  "fields": {
+    "user": [
+      "admin23"
+    ],
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "alert_type": "above",
+    "target_price": "260.00000000",
+    "current_price": "0E-8",
+    "is_triggered": false,
+    "is_active": true,
+    "created_at": "2026-03-26T07:28:48.546Z",
+    "triggered_at": null
+  }
+},
+{
+  "model": "portfolio.watchlistitem",
+  "pk": 1,
+  "fields": {
+    "user": [
+      "Blesson"
+    ],
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "current_price": "309.10998535",
+    "added_at": "2026-03-20T13:53:54.121Z"
+  }
+},
+{
+  "model": "portfolio.watchlistitem",
+  "pk": 2,
+  "fields": {
+    "user": [
+      "unknownman24"
+    ],
+    "symbol": "TSLA",
+    "name": "Tesla Inc",
+    "asset_type": "stock",
+    "current_price": "367.95999146",
+    "added_at": "2026-03-21T08:02:55.219Z"
+  }
+},
+{
+  "model": "portfolio.watchlistitem",
+  "pk": 3,
+  "fields": {
+    "user": [
+      "Blesson"
+    ],
+    "symbol": "TSLA",
+    "name": "Tsla Inc",
+    "asset_type": "stock",
+    "current_price": "337.29998779",
+    "added_at": "2026-03-25T08:48:04.151Z"
+  }
+},
+{
+  "model": "portfolio.watchlistitem",
+  "pk": 4,
+  "fields": {
+    "user": [
+      "admin23"
+    ],
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock",
+    "current_price": "252.61999512",
+    "added_at": "2026-03-26T07:27:58.731Z"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 1,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-03-20",
+    "total_value": "3465.06",
+    "total_invested": "3466.44",
+    "profit_loss": "-1.38"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 2,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-03-21",
+    "total_value": "74149.60",
+    "total_invested": "74161.69",
+    "profit_loss": "-12.09"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 3,
+  "fields": {
+    "portfolio": 2,
+    "date": "2026-03-21",
+    "total_value": "141396.67",
+    "total_invested": "141390.50",
+    "profit_loss": "6.17"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 4,
+  "fields": {
+    "portfolio": 3,
+    "date": "2026-03-22",
+    "total_value": "0.00",
+    "total_invested": "0.00",
+    "profit_loss": "0.00"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 5,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-03-22",
+    "total_value": "70076.91",
+    "total_invested": "72182.81",
+    "profit_loss": "-2105.90"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 6,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-03-23",
+    "total_value": "72573.72",
+    "total_invested": "72182.81",
+    "profit_loss": "390.91"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 7,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-03-24",
+    "total_value": "71959.62",
+    "total_invested": "72182.81",
+    "profit_loss": "-223.19"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 8,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-03-25",
+    "total_value": "72971.93",
+    "total_invested": "72182.81",
+    "profit_loss": "789.12"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 9,
+  "fields": {
+    "portfolio": 4,
+    "date": "2026-03-25",
+    "total_value": "0.00",
+    "total_invested": "0.00",
+    "profit_loss": "0.00"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 10,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-03-26",
+    "total_value": "70453.35",
+    "total_invested": "72182.81",
+    "profit_loss": "-1729.46"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 11,
+  "fields": {
+    "portfolio": 5,
+    "date": "2026-03-26",
+    "total_value": "505.24",
+    "total_invested": "505.24",
+    "profit_loss": "0.00"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 12,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-03-27",
+    "total_value": "69424.35",
+    "total_invested": "72182.81",
+    "profit_loss": "-2758.46"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 13,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-04-02",
+    "total_value": "67661.53",
+    "total_invested": "71847.33",
+    "profit_loss": "-4185.80"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 14,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-04-16",
+    "total_value": "6662.78",
+    "total_invested": "6665.87",
+    "profit_loss": "-3.09"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 15,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-04-17",
+    "total_value": "6653.49",
+    "total_invested": "6665.87",
+    "profit_loss": "-12.38"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 16,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-04-23",
+    "total_value": "5819.01",
+    "total_invested": "5798.46",
+    "profit_loss": "20.55"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 17,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-05-06",
+    "total_value": "5817.03",
+    "total_invested": "5798.46",
+    "profit_loss": "18.58"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 18,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-05-07",
+    "total_value": "5966.51",
+    "total_invested": "5798.46",
+    "profit_loss": "168.06"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 19,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-07-03",
+    "total_value": "5889.48",
+    "total_invested": "5798.46",
+    "profit_loss": "91.03"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 20,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-07-07",
+    "total_value": "5968.58",
+    "total_invested": "5798.46",
+    "profit_loss": "170.12"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 21,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-08-18",
+    "total_value": "7788.06",
+    "total_invested": "7347.86",
+    "profit_loss": "440.20"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 22,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-08-24",
+    "total_value": "7897.75",
+    "total_invested": "7347.86",
+    "profit_loss": "549.89"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 23,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-08-26",
+    "total_value": "7834.62",
+    "total_invested": "7347.86",
+    "profit_loss": "486.76"
+  }
+},
+{
+  "model": "portfolio.portfoliosnapshot",
+  "pk": 24,
+  "fields": {
+    "portfolio": 1,
+    "date": "2026-08-27",
+    "total_value": "7840.37",
+    "total_invested": "7347.86",
+    "profit_loss": "492.51"
+  }
+},
+{
+  "model": "stocks.stockcache",
+  "pk": 1,
+  "fields": {
+    "symbol": "MSFT",
+    "name": "Microsoft Corporation",
+    "asset_type": "stock",
+    "current_price": "483.24000000",
+    "open_price": "479.88000000",
+    "high_price": "486.36000000",
+    "low_price": "478.53000000",
+    "volume": 22489200,
+    "market_cap": 3588320657408,
+    "week_52_high": "553.72000000",
+    "week_52_low": "349.20000000",
+    "sector": "Technology",
+    "last_updated": "2026-08-23T19:02:21.431Z"
+  }
+},
+{
+  "model": "stocks.stockcache",
+  "pk": 2,
+  "fields": {
+    "symbol": "AAPL",
+    "name": "Apple Inc.",
+    "asset_type": "stock",
+    "current_price": "309.35000000",
+    "open_price": "312.05000000",
+    "high_price": "312.38000000",
+    "low_price": "307.01000000",
+    "volume": 46768100,
+    "market_cap": 4514709504000,
+    "week_52_high": "344.57000000",
+    "week_52_low": "224.69000000",
+    "sector": "Technology",
+    "last_updated": "2026-08-23T18:58:05.981Z"
+  }
+},
+{
+  "model": "stocks.stockcache",
+  "pk": 3,
+  "fields": {
+    "symbol": "TSLA",
+    "name": "Tesla, Inc.",
+    "asset_type": "stock",
+    "current_price": "391.95000000",
+    "open_price": "366.83000000",
+    "high_price": "394.65000000",
+    "low_price": "362.50000000",
+    "volume": 113381300,
+    "market_cap": 1470765727744,
+    "week_52_high": "498.83000000",
+    "week_52_low": "222.79000000",
+    "sector": "Consumer Cyclical",
+    "last_updated": "2026-04-16T13:20:45.052Z"
+  }
+},
+{
+  "model": "stocks.stockcache",
+  "pk": 4,
+  "fields": {
+    "symbol": "ETH-USD",
+    "name": "Ethereum USD",
+    "asset_type": "stock",
+    "current_price": "2324.76000000",
+    "open_price": "2318.09000000",
+    "high_price": "2345.81000000",
+    "low_price": "2309.59000000",
+    "volume": 20538255360,
+    "market_cap": 280579571712,
+    "week_52_high": "4953.73300000",
+    "week_52_low": "1386.79930000",
+    "sector": "N/A",
+    "last_updated": "2026-03-18T05:39:08.106Z"
+  }
+},
+{
+  "model": "stocks.stockcache",
+  "pk": 5,
+  "fields": {
+    "symbol": "BTC-USD",
+    "name": "Bitcoin USD",
+    "asset_type": "stock",
+    "current_price": "77358.82000000",
+    "open_price": "77076.06000000",
+    "high_price": "77673.51000000",
+    "low_price": "75884.68000000",
+    "volume": 30046066688,
+    "market_cap": 1551321268224,
+    "week_52_high": "126198.07000000",
+    "week_52_low": "57747.76600000",
+    "sector": "N/A",
+    "last_updated": "2026-08-23T19:01:44.654Z"
+  }
+},
+{
+  "model": "stocks.stockcache",
+  "pk": 6,
+  "fields": {
+    "symbol": "GOOGL",
+    "name": "Alphabet Inc.",
+    "asset_type": "stock",
+    "current_price": "297.39000000",
+    "open_price": "290.84000000",
+    "high_price": "300.52000000",
+    "low_price": "290.41000000",
+    "volume": 37643200,
+    "market_cap": 3597527154688,
+    "week_52_high": "349.00000000",
+    "week_52_low": "140.53000000",
+    "sector": "Communication Services",
+    "last_updated": "2026-04-02T06:15:50.502Z"
+  }
+},
+{
+  "model": "stocks.stockcache",
+  "pk": 7,
+  "fields": {
+    "symbol": "ABNB",
+    "name": "Airbnb, Inc.",
+    "asset_type": "stock",
+    "current_price": "137.51000000",
+    "open_price": "134.51000000",
+    "high_price": "138.05000000",
+    "low_price": "134.10000000",
+    "volume": 3560900,
+    "market_cap": 82439168000,
+    "week_52_high": "143.88000000",
+    "week_52_low": "109.79000000",
+    "sector": "Consumer Cyclical",
+    "last_updated": "2026-04-16T13:22:48.592Z"
+  }
+},
+{
+  "model": "stocks.stockcache",
+  "pk": 8,
+  "fields": {
+    "symbol": "NVDA",
+    "name": "NVIDIA Corporation",
+    "asset_type": "stock",
+    "current_price": "198.87000000",
+    "open_price": "196.54000000",
+    "high_price": "200.40000000",
+    "low_price": "195.74000000",
+    "volume": 184934400,
+    "market_cap": 4833535328256,
+    "week_52_high": "212.19000000",
+    "week_52_low": "95.04000000",
+    "sector": "Technology",
+    "last_updated": "2026-04-16T13:25:31.267Z"
+  }
+}
+]

@@ -1,8 +1,10 @@
 import io
 import csv
+import json
 from django.http import HttpResponse
 import csv
 import io
+import math
 
 import yfinance as yf
 import numpy as np
@@ -11,6 +13,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.conf import settings
+from django.core.cache import cache
 from django.utils import timezone
 from .models import Portfolio, Holding, Transaction, PriceAlert, WatchlistItem, PortfolioSnapshot
 from .forms import AddHoldingForm, BuyForm, SellForm, PriceAlertForm, WatchlistForm
@@ -25,62 +29,9 @@ except ImportError:
     SKLEARN_AVAILABLE = False
 
 
-
 def get_or_create_portfolio(user):
     portfolio, _ = Portfolio.objects.get_or_create(user=user)
     return portfolio
-
-
-def update_prices(portfolio):
-    for holding in portfolio.holdings.all():
-        try:
-            data = yf.Ticker(holding.symbol).history(period='1d')
-            if not data.empty:
-                holding.current_price = round(float(data['Close'].iloc[-1]), 8)
-                holding.save()
-        except Exception:
-            pass
-
-
-def save_snapshot(portfolio):
-    today = date.today()
-    PortfolioSnapshot.objects.update_or_create(
-        portfolio=portfolio, date=today,
-        defaults={
-            'total_value':    round(portfolio.total_value(), 2),
-            'total_invested': round(portfolio.total_invested(), 2),
-            'profit_loss':    round(portfolio.total_profit_loss(), 2),
-        }
-    )
-
-
-def check_price_alerts(user):
-    triggered = []
-    for alert in PriceAlert.objects.filter(user=user, is_active=True, is_triggered=False):
-        try:
-            data = yf.Ticker(alert.symbol).history(period='1d')
-            if not data.empty:
-                alert.current_price = round(float(data['Close'].iloc[-1]), 8)
-                alert.save()
-                if alert.check_trigger():
-                    alert.is_triggered = True
-                    alert.triggered_at = timezone.now()
-                    alert.save()
-                    triggered.append(alert)
-        except Exception:
-            pass
-    return triggered
-
-
-def update_watchlist_prices(user):
-    for item in WatchlistItem.objects.filter(user=user):
-        try:
-            data = yf.Ticker(item.symbol).history(period='1d')
-            if not data.empty:
-                item.current_price = round(float(data['Close'].iloc[-1]), 8)
-                item.save()
-        except Exception:
-            pass
 
 
 def get_weekly_snapshots(portfolio):
@@ -253,10 +204,12 @@ def landing(request):
 @login_required
 def dashboard(request):
     portfolio = get_or_create_portfolio(request.user)
-    update_prices(portfolio)
-    save_snapshot(portfolio)
-
-    for alert in check_price_alerts(request.user):
+    recently_triggered = PriceAlert.objects.filter(
+        user=request.user,
+        is_triggered=True,
+        triggered_at__gte=timezone.now() - timedelta(hours=24),
+    )
+    for alert in recently_triggered:
         messages.warning(request, f'🔔 Alert: {alert.symbol} has gone {alert.alert_type} ${alert.target_price}!')
 
     holdings  = portfolio.holdings.all()
@@ -280,7 +233,15 @@ def dashboard(request):
 @login_required
 def portfolio_view(request):
     portfolio = get_or_create_portfolio(request.user)
-    update_prices(portfolio)
+    return render(request, 'portfolio/portfolio.html', {
+        'portfolio': portfolio,
+        'holdings':  portfolio.holdings.all(),
+    })
+
+
+@login_required
+def portfolio_view(request):
+    portfolio = get_or_create_portfolio(request.user)
     return render(request, 'portfolio/portfolio.html', {
         'portfolio': portfolio,
         'holdings':  portfolio.holdings.all(),
@@ -289,45 +250,75 @@ def portfolio_view(request):
 
 @login_required
 def holding_detail(request, holding_id):
+    """Holding detail page with price history, technical indicators
+    (MACD, RSI, Bollinger Bands) and a 7-day ensemble prediction chart."""
     portfolio = get_or_create_portfolio(request.user)
     holding   = get_object_or_404(Holding, id=holding_id, portfolio=portfolio)
 
-    history       = []
-    prices        = []
-    history_dates = []
-    info          = {}
+    # The RandomForest fit + MACD/RSI/Bollinger computation below is not
+    # cheap, and this page used to redo all of it — plus a live yfinance
+    # call — on every single request. Cache the computed result for the
+    # same window the stocks app uses for its own yfinance calls.
+    cache_key = f'holding_detail_{holding.symbol}'
+    cached     = cache.get(cache_key)
 
-    try:
-        ticker = yf.Ticker(holding.symbol)
-        # 3 months gives enough history for stable MACD/RSI/Bollinger Bands
-        # and a better-fed prediction model than the old 30-day window.
-        hist   = ticker.history(period='3mo')
-        info   = ticker.info
+    if cached:
+        history, prices, history_dates, info = (
+            cached['history'], cached['prices'], cached['history_dates'], cached['info']
+        )
+        predicted, pred_upper, pred_lower, pred_model = (
+            cached['predicted'], cached['pred_upper'], cached['pred_lower'], cached['pred_model']
+        )
+        macd_line, macd_signal, macd_hist = cached['macd_line'], cached['macd_signal'], cached['macd_hist']
+        rsi_values                        = cached['rsi_values']
+        bb_mid, bb_upper, bb_lower        = cached['bb_mid'], cached['bb_upper'], cached['bb_lower']
+    else:
+        history       = []
+        prices        = []
+        history_dates = []
+        info          = {}
 
-        for row in hist.itertuples():
-            close = round(float(row.Close), 2)
-            history.append({'date': str(row.Index.date()), 'close': close})
-            prices.append(close)
-            history_dates.append(str(row.Index.date()))
+        try:
+            ticker = yf.Ticker(holding.symbol)
+            # 3 months gives enough history for stable MACD/RSI/Bollinger Bands
+            # and a better-fed prediction model than the old 30-day window.
+            hist   = ticker.history(period='3mo')
+            info   = ticker.info
 
-        if prices:
-            holding.current_price = prices[-1]
-            holding.save()
+            for row in hist.itertuples():
+                close = float(row.Close)
+                if math.isnan(close) or math.isinf(close):
+                    continue  # skip bad/partial trading days instead of poisoning the series
+                close = round(close, 2)
+                history.append({'date': str(row.Index.date()), 'close': close})
+                prices.append(close)
+                history_dates.append(str(row.Index.date()))
 
-    except Exception:
-        pass
+            if prices:
+                holding.current_price = prices[-1]
+                holding.save()
 
-    # 7-day ensemble prediction (Random Forest + Holt's exponential smoothing)
-    prediction = predict_prices(prices, days=7)
-    predicted  = prediction['predicted']
-    pred_upper = prediction['upper']
-    pred_lower = prediction['lower']
-    pred_model = prediction['model']
+        except Exception:
+            pass
 
-    # Technical indicators
-    macd_line, macd_signal, macd_hist = calculate_macd(prices)
-    rsi_values                        = calculate_rsi(prices)
-    bb_mid, bb_upper, bb_lower        = calculate_bollinger_bands(prices)
+        # 7-day ensemble prediction (Random Forest + Holt's exponential smoothing)
+        prediction = predict_prices(prices, days=7)
+        predicted  = prediction['predicted']
+        pred_upper = prediction['upper']
+        pred_lower = prediction['lower']
+        pred_model = prediction['model']
+
+        # Technical indicators
+        macd_line, macd_signal, macd_hist = calculate_macd(prices)
+        rsi_values                        = calculate_rsi(prices)
+        bb_mid, bb_upper, bb_lower        = calculate_bollinger_bands(prices)
+
+        cache.set(cache_key, {
+            'history': history, 'prices': prices, 'history_dates': history_dates, 'info': info,
+            'predicted': predicted, 'pred_upper': pred_upper, 'pred_lower': pred_lower, 'pred_model': pred_model,
+            'macd_line': macd_line, 'macd_signal': macd_signal, 'macd_hist': macd_hist,
+            'rsi_values': rsi_values, 'bb_mid': bb_mid, 'bb_upper': bb_upper, 'bb_lower': bb_lower,
+        }, settings.STOCK_CACHE_TIMEOUT)
 
     # Future dates
     if history_dates:
@@ -347,25 +338,36 @@ def holding_detail(request, holding_id):
         'pe_ratio':     round(info.get('trailingPE', 0), 2) if info.get('trailingPE') else 'N/A',
     }
 
+    # These arrays are injected directly into an inline <script> block via
+    # `{{ var|safe }}` in the template. Passing raw Python lists there is
+    # unsafe: Python's default str() renders NaN as bare `nan` (invalid
+    # JS — throws ReferenceError, silently killing every chart on the
+    # page) and would do the same for True/False/None. json.dumps()
+    # produces real, valid JS array literals regardless of what's in the
+    # data (NaN becomes valid JS `NaN`, matching the language's own
+    # global of that name).
+    def js(value):
+        return json.dumps(value)
+
     return render(request, 'portfolio/holding_detail.html', {
         'holding':        holding,
         'history':        history,
-        'predicted':      predicted,
-        'pred_upper':     pred_upper,
-        'pred_lower':     pred_lower,
+        'predicted':      js(predicted),
+        'pred_upper':     js(pred_upper),
+        'pred_lower':     js(pred_lower),
         'pred_model':     pred_model,
-        'fut_dates':      fut_dates,
+        'fut_dates':      js(fut_dates),
         'trend':          trend,
         'stats':          stats,
-        'prices':         prices,
-        'history_dates':  history_dates,
-        'macd_line':      macd_line,
-        'macd_signal':    macd_signal,
-        'macd_hist':      macd_hist,
-        'rsi_values':     rsi_values,
-        'bb_mid':         bb_mid,
-        'bb_upper':       bb_upper,
-        'bb_lower':       bb_lower,
+        'prices':         js(prices),
+        'history_dates':  js(history_dates),
+        'macd_line':      js(macd_line),
+        'macd_signal':    js(macd_signal),
+        'macd_hist':      js(macd_hist),
+        'rsi_values':     js(rsi_values),
+        'bb_mid':         js(bb_mid),
+        'bb_upper':       js(bb_upper),
+        'bb_lower':       js(bb_lower),
     })
 
 
@@ -749,8 +751,6 @@ def watchlist(request):
             return redirect('portfolio:watchlist')
     else:
         form = WatchlistForm()
-
-    update_watchlist_prices(request.user)
     return render(request, 'portfolio/watchlist.html', {
         'form':  form,
         'items': WatchlistItem.objects.filter(user=request.user),

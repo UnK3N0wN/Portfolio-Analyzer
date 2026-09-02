@@ -77,6 +77,10 @@ class Transaction(models.Model):
 
     class Meta:
         ordering = ['-date']
+        indexes = [
+            models.Index(fields=['portfolio', '-date']),
+            models.Index(fields=['symbol']),
+        ]
 
     def __str__(self):
         return f'{self.transaction_type.upper()} {self.quantity} {self.symbol} @ {self.price}'
@@ -100,6 +104,9 @@ class PriceAlert(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_active', 'is_triggered']),
+        ]
 
     def __str__(self):
         return f'{self.symbol} {self.alert_type} ${self.target_price}'
