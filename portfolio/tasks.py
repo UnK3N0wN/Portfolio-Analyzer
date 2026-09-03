@@ -24,10 +24,14 @@ def update_all_holding_prices():
     for holding in Holding.objects.select_related('portfolio').all():
         try:
             data = yf.Ticker(holding.symbol).history(period='1d')
-            if not data.empty:
-                holding.current_price = round(float(data['Close'].iloc[-1]), 8)
+            price = _safe_close(data)
+            if price is not None:
+                holding.current_price = price
                 holding.save(update_fields=['current_price', 'last_updated'])
                 updated += 1
+            else:
+                logger.warning('Skipped price update for %s: NaN/empty close', holding.symbol)
+
         except Exception:
             failed += 1
             logger.warning('Price update failed for %s', holding.symbol, exc_info=True)
@@ -43,18 +47,18 @@ def check_all_price_alerts():
     for alert in alerts:
         try:
             data = yf.Ticker(alert.symbol).history(period='1d')
-            if data.empty:
+            price = _safe_close(data)
+            if price is None:
                 continue
-            alert.current_price = round(float(data['Close'].iloc[-1]), 8)
+            alert.current_price = price
             if alert.check_trigger():
                 alert.is_triggered = True
                 alert.triggered_at = timezone.now()
                 alert.save(update_fields=['current_price', 'is_triggered', 'triggered_at'])
                 triggered += 1
-                # TODO: hook up email/push notification here — this is the
-                # natural place for it now that it's decoupled from a request.
             else:
                 alert.save(update_fields=['current_price'])
+
         except Exception:
             failed += 1
             logger.warning('Alert check failed for %s', alert.symbol, exc_info=True)
@@ -69,8 +73,9 @@ def update_all_watchlist_prices():
     for item in WatchlistItem.objects.all():
         try:
             data = yf.Ticker(item.symbol).history(period='1d')
-            if not data.empty:
-                item.current_price = round(float(data['Close'].iloc[-1]), 8)
+            price = _safe_close(data)
+            if price is not None:
+                item.current_price = price
                 item.save(update_fields=['current_price'])
                 updated += 1
         except Exception:

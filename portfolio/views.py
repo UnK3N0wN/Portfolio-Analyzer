@@ -33,6 +33,16 @@ def get_or_create_portfolio(user):
     portfolio, _ = Portfolio.objects.get_or_create(user=user)
     return portfolio
 
+def ensure_todays_snapshot(portfolio):
+    today = date.today()
+    PortfolioSnapshot.objects.update_or_create(
+        portfolio=portfolio, date=today,
+        defaults={
+            'total_value':    round(portfolio.total_value(), 2),
+            'total_invested': round(portfolio.total_invested(), 2),
+            'profit_loss':    round(portfolio.total_profit_loss(), 2),
+        }
+    )
 
 def get_weekly_snapshots(portfolio):
     seven_days_ago = date.today() - timedelta(days=7)
@@ -204,6 +214,7 @@ def landing(request):
 @login_required
 def dashboard(request):
     portfolio = get_or_create_portfolio(request.user)
+    ensure_todays_snapshot(portfolio)
     recently_triggered = PriceAlert.objects.filter(
         user=request.user,
         is_triggered=True,

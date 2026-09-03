@@ -125,6 +125,8 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 
+# Force Django to bypass Redis and use memory/database when running tests
+    
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
