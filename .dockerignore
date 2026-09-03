@@ -1,0 +1,45 @@
+# Virtual environments — never bake these into the image
+ai_venv/
+venv/
+env/
+.venv/
+
+# Version control
+.git/
+.gitignore
+
+# Python bytecode/cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Django runtime artifacts (generated fresh inside the container)
+db.sqlite3
+staticfiles/
+media/
+logs/
+*.log
+
+# Secrets — never bake these into an image; they're injected at runtime via env vars
+.env
+.env.*
+!.env.example
+
+# Editor/OS junk
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+data_backup.json
+
+# Docs not needed at runtime
+README.md
+MIGRATING_TO_POSTGRES.md
